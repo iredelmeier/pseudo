@@ -1,0 +1,11 @@
+[package]
+name = "pseudo"
+version = "0.0.1"
+authors = ["Isobel Redelmeier <iredelmeier@gmail.com>"]
+license = "MIT"
+
+[lib]
+bench = false
+test = false
+
+[dependencies]
