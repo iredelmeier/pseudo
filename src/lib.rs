@@ -52,4 +52,6 @@
 
 pub use mock::Mock;
 
+pub type Pseudo<C, R> = Mock<C, R>;
+
 mod mock;
