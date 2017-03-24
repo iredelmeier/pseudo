@@ -5,6 +5,7 @@ description = "A small mocking library for Rust"
 authors = ["Isobel Redelmeier <iredelmeier@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/iredelmeier/pseudo"
+documentation = "https://docs.rs/pseudo"
 readme = "README.md"
 categories = [
   "development-tools::testing"

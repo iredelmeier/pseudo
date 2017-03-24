@@ -2,7 +2,9 @@
 
 ### A small mocking library for Rust.
 
-[![Build Status](https://travis-ci.org/iredelmeier/pseudo.svg?branch=master)](https://travis-ci.org/iredelmeier/pseudo)
+[![Build Status](https://travis-ci.org/iredelmeier/pseudo.svg?branch=master)](https://travis-ci.org/iredelmeier/pseudo) [![Docs](https://docs.rs/pseudo/badge.svg)](https://docs.rs/pseudo)
+
+[Documentation](https://docs.rs/pseudo)
 
 Pseudo lets you mock `Trait` implementations so that you can track function call arguments and set return values or overrides functions at test time.
 
