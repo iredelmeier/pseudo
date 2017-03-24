@@ -2,12 +2,24 @@
 name = "pseudo"
 version = "0.0.1"
 description = "A small mocking library for Rust"
-repository = "https://github.com/iredelmeier/pseudo"
 authors = ["Isobel Redelmeier <iredelmeier@gmail.com>"]
 license = "MIT"
+repository = "https://github.com/iredelmeier/pseudo"
+readme = "README.md"
+categories = [
+  "development-tools::testing"
+]
+keywords = [
+  "mock",
+  "test",
+  "testing"
+]
 
 [lib]
 bench = false
 test = false
 
 [dependencies]
+
+[badges]
+travis-ci = { repository = "iredelmeier/pseudo" }
