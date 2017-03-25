@@ -79,7 +79,7 @@ impl<C, R> Mock<C, R>
     /// assert_eq!(mock.call("something"), "new value");
     /// ```
     pub fn return_value(&self, return_value: R) {
-        self.set_return_value(return_value)
+        *self.return_value.borrow_mut() = return_value
     }
 
     /// Specify a function to determine the `Mock`'s return value based on
@@ -119,7 +119,7 @@ impl<C, R> Mock<C, R>
     /// assert_eq!(mock.call((1, 2, 3,)), 6);
     /// ```
     pub fn use_fn(&self, mock_fn: fn(C) -> R) {
-        self.set_mock_fn(mock_fn)
+        *self.mock_fn.borrow_mut() = Some(mock_fn)
     }
 
     /// Returns true if `Mock::call` has been called.
@@ -206,14 +206,6 @@ impl<C, R> Mock<C, R>
     pub fn reset_calls(&self) {
         self.calls.borrow_mut().clear()
     }
-
-    fn set_return_value(&self, return_value: R) {
-        *self.return_value.borrow_mut() = return_value
-    }
-
-    fn set_mock_fn(&self, mock_fn: fn(C) -> R) {
-        *self.mock_fn.borrow_mut() = Some(mock_fn)
-    }
 }
 
 impl<C, R> Default for Mock<C, R>
@@ -282,7 +274,7 @@ impl<C, S> Mock<C, Option<S>>
     /// assert_eq!(mock.call(()), Some(10));
     /// ```
     pub fn return_some(&self, return_value: S) {
-        self.set_return_value(Some(return_value))
+        self.return_value(Some(return_value))
     }
 
     /// Return `None` from `Mock::call`.
@@ -298,7 +290,7 @@ impl<C, S> Mock<C, Option<S>>
     /// assert_eq!(mock.call(()), None);
     /// ```
     pub fn return_none(&self) {
-        self.set_return_value(None)
+        self.return_value(None)
     }
 }
 
@@ -320,7 +312,7 @@ impl<C, O, E> Mock<C, Result<O, E>>
     /// assert_eq!(mock.call(()), Ok("success"));
     /// ```
     pub fn return_ok(&self, return_value: O) {
-        self.set_return_value(Ok(return_value))
+        self.return_value(Ok(return_value))
     }
 
     /// Return `Err(return_value)` from `Mock::call`.
@@ -336,6 +328,6 @@ impl<C, O, E> Mock<C, Result<O, E>>
     /// assert_eq!(mock.call(()), Err("oh no"));
     /// ```
     pub fn return_err(&self, return_value: E) {
-        self.set_return_value(Err(return_value))
+        self.return_value(Err(return_value))
     }
 }
