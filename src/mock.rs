@@ -25,9 +25,9 @@ impl<C, R> Mock<C, R>
           R: Clone
 {
     /// Creates a new `Mock` that will return `return_value`.
-    pub fn new(return_value: R) -> Self {
+    pub fn new<T: Into<R>>(return_value: T) -> Self {
         Mock {
-            return_value: Rc::new(RefCell::new(return_value)),
+            return_value: Rc::new(RefCell::new(return_value.into())),
             mock_fn: Rc::new(RefCell::new(None)),
             calls: Rc::new(RefCell::new(vec![])),
         }
@@ -73,13 +73,13 @@ impl<C, R> Mock<C, R>
     /// ```
     /// use pseudo::Mock;
     ///
-    /// let mock = Mock::<&str, _>::new("original value");
+    /// let mock = Mock::<&str, &str>::new("original value");
     /// mock.return_value("new value");
     ///
     /// assert_eq!(mock.call("something"), "new value");
     /// ```
-    pub fn return_value(&self, return_value: R) {
-        *self.return_value.borrow_mut() = return_value
+    pub fn return_value<T: Into<R>>(&self, return_value: T) {
+        *self.return_value.borrow_mut() = return_value.into()
     }
 
     /// Specify a function to determine the `Mock`'s return value based on
@@ -167,7 +167,7 @@ impl<C, R> Mock<C, R>
     /// ```
     /// use pseudo::Mock;
     ///
-    /// let mock = Mock::<&str, _>::new("");
+    /// let mock = Mock::<&str, &str>::new("");
     ///
     /// mock.call("first");
     /// mock.call("second");
@@ -273,8 +273,8 @@ impl<C, S> Mock<C, Option<S>>
     ///
     /// assert_eq!(mock.call(()), Some(10));
     /// ```
-    pub fn return_some(&self, return_value: S) {
-        self.return_value(Some(return_value))
+    pub fn return_some<T: Into<S>>(&self, return_value: T) {
+        self.return_value(Some(return_value.into()))
     }
 
     /// Return `None` from `Mock::call`.
@@ -311,8 +311,8 @@ impl<C, O, E> Mock<C, Result<O, E>>
     ///
     /// assert_eq!(mock.call(()), Ok("success"));
     /// ```
-    pub fn return_ok(&self, return_value: O) {
-        self.return_value(Ok(return_value))
+    pub fn return_ok<T: Into<O>>(&self, return_value: T) {
+        self.return_value(Ok(return_value.into()))
     }
 
     /// Return `Err(return_value)` from `Mock::call`.
@@ -327,7 +327,7 @@ impl<C, O, E> Mock<C, Result<O, E>>
     ///
     /// assert_eq!(mock.call(()), Err("oh no"));
     /// ```
-    pub fn return_err(&self, return_value: E) {
-        self.return_value(Err(return_value))
+    pub fn return_err<T: Into<E>>(&self, return_value: T) {
+        self.return_value(Err(return_value.into()))
     }
 }
