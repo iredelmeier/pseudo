@@ -1,4 +1,6 @@
+use std::fmt;
 use std::cell::RefCell;
+use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 
 type OptionalRef<T> = Rc<RefCell<Option<T>>>;
@@ -10,13 +12,14 @@ type OptionalRef<T> = Rc<RefCell<Option<T>>>;
 /// that demonstrate how to use `Mock` for methods that have multiple arguments
 /// as well as methods with argument or return types that do not implement
 /// `Clone`.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Mock<C, R>
     where C: Clone,
           R: Clone
 {
     return_value: Rc<RefCell<R>>,
     mock_fn: OptionalRef<fn(C) -> R>,
+    mock_closure: OptionalRef<Box<Fn(C) -> R>>,
     calls: Rc<RefCell<Vec<C>>>,
 }
 
@@ -29,6 +32,7 @@ impl<C, R> Mock<C, R>
         Mock {
             return_value: Rc::new(RefCell::new(return_value.into())),
             mock_fn: Rc::new(RefCell::new(None)),
+            mock_closure: Rc::new(RefCell::new(None)),
             calls: Rc::new(RefCell::new(vec![])),
         }
     }
@@ -40,6 +44,7 @@ impl<C, R> Mock<C, R>
     /// - the return value specified via `Mock::return_value` or a derivative,
     /// such as `Mock::return_some`
     /// - the output of the function set via `Mock::use_fn` with the current arguments
+    /// - the output of the closure set via `Mock::use_closure` with the current arguments
     ///
     /// # Examples
     ///
@@ -54,16 +59,25 @@ impl<C, R> Mock<C, R>
     ///
     /// mock.use_fn(str::trim);
     /// assert_eq!(mock.call("  test  "), "test");
+    ///
+    /// mock.use_closure(Box::new(|x| x.trim_left()));
+    /// assert_eq!(mock.call("  test  "), "test  ");
+    ///
+    /// mock.use_fn(str::trim);
+    /// assert_eq!(mock.call("  test  "), "test");
     /// ```
     pub fn call(&self, args: C) -> R {
-        let mock_fn = *self.mock_fn.borrow();
         self.calls.borrow_mut().push(args.clone());
 
-        if let Some(mock_fn) = mock_fn {
-            mock_fn(args)
-        } else {
-            self.return_value.borrow().clone()
+        if let Some(ref mock_fn) = *self.mock_fn.borrow() {
+            return mock_fn(args);
         }
+
+        if let Some(ref mock_closure) = *self.mock_closure.borrow() {
+            return mock_closure(args);
+        }
+
+        self.return_value.borrow().clone()
     }
 
     /// Override the initial return value.
@@ -119,7 +133,43 @@ impl<C, R> Mock<C, R>
     /// assert_eq!(mock.call((1, 2, 3,)), 6);
     /// ```
     pub fn use_fn(&self, mock_fn: fn(C) -> R) {
+        *self.mock_closure.borrow_mut() = None;
         *self.mock_fn.borrow_mut() = Some(mock_fn)
+    }
+
+    /// Specify a closure to determine the `Mock`'s return value based on
+    /// the arguments provided to `Mock::call`.
+    ///
+    /// Arguments of `Mock::call` are still tracked.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use pseudo::Mock;
+    ///
+    /// let mock = Mock::<i64, i64>::new(10);
+    /// let add_two = |x| x + 2;
+    /// mock.use_closure(Box::new(add_two));
+    ///
+    /// assert_eq!(mock.call(1), 3);
+    /// assert_eq!(mock.call(10), 12);
+    /// ```
+    ///
+    /// For functions with multiple arguments, use a tuple:
+    ///
+    /// ```
+    /// use pseudo::Mock;
+    ///
+    /// let mock = Mock::<(i64, i64, i64), i64>::default();
+    /// let add = |(x, y, z)| x + y + z;
+    /// mock.use_closure(Box::new(add));
+    ///
+    /// assert_eq!(mock.call((1, 1, 1)), 3);
+    /// assert_eq!(mock.call((1, 2, 3,)), 6);
+    /// ```
+    pub fn use_closure(&self, mock_fn: Box<Fn(C) -> R>) {
+        *self.mock_fn.borrow_mut() = None;
+        *self.mock_closure.borrow_mut() = Some(mock_fn)
     }
 
     /// Returns true if `Mock::call` has been called.
@@ -329,5 +379,17 @@ impl<C, O, E> Mock<C, Result<O, E>>
     /// ```
     pub fn return_err<T: Into<E>>(&self, return_value: T) {
         self.return_value(Err(return_value.into()))
+    }
+}
+
+impl<C, R> Debug for Mock<C, R>
+    where C: Clone + Debug,
+          R: Clone + Debug
+{
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        f.debug_struct("Mock")
+            .field("return_value", &self.return_value)
+            .field("calls", &self.calls)
+            .finish()
     }
 }
