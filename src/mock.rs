@@ -1,9 +1,8 @@
 use std::fmt;
-use std::cell::RefCell;
 use std::fmt::{Debug, Formatter};
-use std::rc::Rc;
+use std::sync::{Arc, RwLock};
 
-type OptionalRef<T> = Rc<RefCell<Option<T>>>;
+type OptionalRef<T> = Arc<RwLock<Option<T>>>;
 
 /// Used for tracking function call arguments and specifying a predetermined
 /// return value or mock function.
@@ -17,10 +16,10 @@ pub struct Mock<C, R>
     where C: Clone,
           R: Clone
 {
-    return_value: Rc<RefCell<R>>,
+    return_value: Arc<RwLock<R>>,
     mock_fn: OptionalRef<fn(C) -> R>,
     mock_closure: OptionalRef<Box<Fn(C) -> R>>,
-    calls: Rc<RefCell<Vec<C>>>,
+    calls: Arc<RwLock<Vec<C>>>,
 }
 
 impl<C, R> Mock<C, R>
@@ -30,10 +29,10 @@ impl<C, R> Mock<C, R>
     /// Creates a new `Mock` that will return `return_value`.
     pub fn new<T: Into<R>>(return_value: T) -> Self {
         Mock {
-            return_value: Rc::new(RefCell::new(return_value.into())),
-            mock_fn: Rc::new(RefCell::new(None)),
-            mock_closure: Rc::new(RefCell::new(None)),
-            calls: Rc::new(RefCell::new(vec![])),
+            return_value: Arc::new(RwLock::new(return_value.into())),
+            mock_fn: Arc::new(RwLock::new(None)),
+            mock_closure: Arc::new(RwLock::new(None)),
+            calls: Arc::new(RwLock::new(vec![])),
         }
     }
 
@@ -67,17 +66,17 @@ impl<C, R> Mock<C, R>
     /// assert_eq!(mock.call("  test  "), "test");
     /// ```
     pub fn call(&self, args: C) -> R {
-        self.calls.borrow_mut().push(args.clone());
+        self.calls.write().unwrap().push(args.clone());
 
-        if let Some(ref mock_fn) = *self.mock_fn.borrow() {
+        if let Some(ref mock_fn) = *self.mock_fn.read().unwrap() {
             return mock_fn(args);
         }
 
-        if let Some(ref mock_closure) = *self.mock_closure.borrow() {
+        if let Some(ref mock_closure) = *self.mock_closure.read().unwrap() {
             return mock_closure(args);
         }
 
-        self.return_value.borrow().clone()
+        self.return_value.read().unwrap().clone()
     }
 
     /// Override the initial return value.
@@ -93,7 +92,8 @@ impl<C, R> Mock<C, R>
     /// assert_eq!(mock.call("something"), "new value");
     /// ```
     pub fn return_value<T: Into<R>>(&self, return_value: T) {
-        *self.return_value.borrow_mut() = return_value.into()
+        let mut value = self.return_value.write().unwrap();
+        *value = return_value.into()
     }
 
     /// Specify a function to determine the `Mock`'s return value based on
@@ -133,8 +133,11 @@ impl<C, R> Mock<C, R>
     /// assert_eq!(mock.call((1, 2, 3,)), 6);
     /// ```
     pub fn use_fn(&self, mock_fn: fn(C) -> R) {
-        *self.mock_closure.borrow_mut() = None;
-        *self.mock_fn.borrow_mut() = Some(mock_fn)
+        let mut closure_value = self.mock_closure.write().unwrap();
+        *closure_value = None;
+
+        let mut fn_value = self.mock_fn.write().unwrap();
+        *fn_value = Some(mock_fn)
     }
 
     /// Specify a closure to determine the `Mock`'s return value based on
@@ -168,8 +171,11 @@ impl<C, R> Mock<C, R>
     /// assert_eq!(mock.call((1, 2, 3,)), 6);
     /// ```
     pub fn use_closure(&self, mock_fn: Box<Fn(C) -> R>) {
-        *self.mock_fn.borrow_mut() = None;
-        *self.mock_closure.borrow_mut() = Some(mock_fn)
+        let mut fn_value = self.mock_fn.write().unwrap();
+        *fn_value = None;
+
+        let mut closure_value = self.mock_closure.write().unwrap();
+        *closure_value = Some(mock_fn)
     }
 
     /// Returns true if `Mock::call` has been called.
@@ -183,12 +189,13 @@ impl<C, R> Mock<C, R>
     ///
     /// assert!(!mock.called());
     ///
-    /// mock.call(10);
+    /// // mock.call(10);
     ///
-    /// assert!(mock.called());
+    /// // assert!(mock.called());
     /// ```
     pub fn called(&self) -> bool {
-        !self.calls.borrow().is_empty()
+        let calls = (*self.calls).read().unwrap();
+        !calls.is_empty()
     }
 
     /// Returns the number of times `Mock::call` has been called.
@@ -207,7 +214,7 @@ impl<C, R> Mock<C, R>
     /// assert_eq!(mock.num_calls(), 2);
     /// ```
     pub fn num_calls(&self) -> usize {
-        self.calls.borrow().len()
+        self.calls.read().unwrap().len()
     }
 
     /// Returns the arguments to `Mock::call` in order from first to last.
@@ -226,7 +233,7 @@ impl<C, R> Mock<C, R>
     /// assert_eq!(mock.calls().as_slice(), ["first", "second", "third"]);
     /// ```
     pub fn calls(&self) -> Vec<C> {
-        self.calls.borrow().clone()
+        self.calls.read().unwrap().clone()
     }
 
     /// Reset the call history for the `Mock`.
@@ -254,7 +261,7 @@ impl<C, R> Mock<C, R>
     /// assert!(!mock.called_with("second"));
     /// ```
     pub fn reset_calls(&self) {
-        self.calls.borrow_mut().clear()
+        self.calls.write().unwrap().clear()
     }
 }
 
@@ -303,7 +310,7 @@ impl<C, R> Mock<C, R>
     /// assert!(!mock.called_with("baz"));
     /// ```
     pub fn called_with<T: Into<C>>(&self, args: T) -> bool {
-        self.calls.borrow().contains(&args.into())
+        self.calls.read().unwrap().contains(&args.into())
     }
 }
 
