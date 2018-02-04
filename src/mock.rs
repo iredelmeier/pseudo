@@ -13,8 +13,9 @@ type OptionalRef<T> = Arc<RwLock<Option<T>>>;
 /// `Clone`.
 #[derive(Clone)]
 pub struct Mock<C, R>
-    where C: Clone,
-          R: Clone
+where
+    C: Clone,
+    R: Clone,
 {
     return_value: Arc<RwLock<R>>,
     mock_fn: OptionalRef<fn(C) -> R>,
@@ -23,8 +24,9 @@ pub struct Mock<C, R>
 }
 
 impl<C, R> Mock<C, R>
-    where C: Clone,
-          R: Clone
+where
+    C: Clone,
+    R: Clone,
 {
     /// Creates a new `Mock` that will return `return_value`.
     pub fn new<T: Into<R>>(return_value: T) -> Self {
@@ -266,8 +268,9 @@ impl<C, R> Mock<C, R>
 }
 
 impl<C, R> Default for Mock<C, R>
-    where C: Clone,
-          R: Clone + Default
+where
+    C: Clone,
+    R: Clone + Default,
 {
     /// Use `R::default()` as the initial return value.
     ///
@@ -291,8 +294,9 @@ impl<C, R> Default for Mock<C, R>
 }
 
 impl<C, R> Mock<C, R>
-    where C: Clone + PartialEq,
-          R: Clone
+where
+    C: Clone + PartialEq,
+    R: Clone,
 {
     /// Returns true if the specified argument has been used for `Mock::call`.
     ///
@@ -315,8 +319,9 @@ impl<C, R> Mock<C, R>
 }
 
 impl<C, S> Mock<C, Option<S>>
-    where C: Clone,
-          S: Clone
+where
+    C: Clone,
+    S: Clone,
 {
     /// Return `Some(return_value)` from `Mock::call`.
     ///
@@ -352,9 +357,10 @@ impl<C, S> Mock<C, Option<S>>
 }
 
 impl<C, O, E> Mock<C, Result<O, E>>
-    where C: Clone,
-          O: Clone,
-          E: Clone
+where
+    C: Clone,
+    O: Clone,
+    E: Clone,
 {
     /// Return `Ok(return_value)` from `Mock::call`.
     ///
@@ -390,8 +396,9 @@ impl<C, O, E> Mock<C, Result<O, E>>
 }
 
 impl<C, R> Debug for Mock<C, R>
-    where C: Clone + Debug,
-          R: Clone + Debug
+where
+    C: Clone + Debug,
+    R: Clone + Debug,
 {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_struct("Mock")

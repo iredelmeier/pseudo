@@ -1,6 +1,6 @@
 extern crate pseudo;
 
-use std::{io, fmt};
+use std::{fmt, io};
 use std::fmt::{Display, Formatter};
 use std::error::Error;
 use std::io::ErrorKind;
@@ -26,18 +26,18 @@ struct MockFileSystem<'a> {
 impl<'a> FileSystem for MockFileSystem<'a> {
     fn copy<P: AsRef<Path>, Q: AsRef<Path>>(&self, from: P, to: Q) -> io::Result<()> {
         let args = (from.as_ref().to_path_buf(), to.as_ref().to_path_buf());
-        self.copy
-            .call(args)
-            .map_err(|err| {
-                let (kind, description) = (err.kind, err.description);
-                io::Error::new(kind, description)
-            })
+        self.copy.call(args).map_err(|err| {
+            let (kind, description) = (err.kind, err.description);
+            io::Error::new(kind, description)
+        })
     }
 }
 
 impl<'a> Default for MockFileSystem<'a> {
     fn default() -> Self {
-        MockFileSystem { copy: Mock::new(Ok(())) }
+        MockFileSystem {
+            copy: Mock::new(Ok(())),
+        }
     }
 }
 
@@ -68,7 +68,10 @@ fn main() {
     assert!(result.iter().all(|res| res.is_ok()));
 
     assert_eq!(mock.copy.num_calls(), 1);
-    let expected_args = (Path::new("from").to_path_buf(), Path::new("to").to_path_buf());
+    let expected_args = (
+        Path::new("from").to_path_buf(),
+        Path::new("to").to_path_buf(),
+    );
     assert!(mock.copy.called_with(expected_args));
 
     let err = CloneableError {

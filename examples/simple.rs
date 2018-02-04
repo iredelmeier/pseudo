@@ -14,7 +14,9 @@ struct Consumer<T: Dependency> {
 
 impl<T: Dependency> Consumer<T> {
     fn new(dependency: &T) -> Self {
-        Consumer { dependency: dependency.clone() }
+        Consumer {
+            dependency: dependency.clone(),
+        }
     }
 
     fn greet_everyone<S: AsRef<str>>(&self, names: Vec<S>) {
@@ -37,7 +39,9 @@ impl Dependency for MockDependency {
 
 impl Default for MockDependency {
     fn default() -> Self {
-        MockDependency { greet: Mock::default() }
+        MockDependency {
+            greet: Mock::default(),
+        }
     }
 }
 
