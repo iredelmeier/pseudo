@@ -41,11 +41,12 @@ where
     /// Use the `Mock` to return a value, keeping track of the arguments used.
     ///
     /// Depending on what has most recently been called, this will return:
-    /// - the return value specified at construction time
-    /// - the return value specified via `Mock::return_value` or a derivative,
+    ///
+    /// * the return value specified at construction time
+    /// * the return value specified via `Mock::return_value` or a derivative,
     /// such as `Mock::return_some`
-    /// - the output of the function set via `Mock::use_fn` with the current arguments
-    /// - the output of the closure set via `Mock::use_closure` with the current arguments
+    /// * the output of the function set via `Mock::use_fn` with the current arguments
+    /// * the output of the closure set via `Mock::use_closure` with the current arguments
     ///
     /// # Examples
     ///
