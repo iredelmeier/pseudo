@@ -19,7 +19,7 @@ where
 {
     return_value: Arc<RwLock<R>>,
     mock_fn: OptionalRef<fn(C) -> R>,
-    mock_closure: OptionalRef<Box<Fn(C) -> R>>,
+    mock_closure: OptionalRef<Box<Fn(C) -> R + Send + Sync>>,
     calls: Arc<RwLock<Vec<C>>>,
 }
 
@@ -173,7 +173,7 @@ where
     /// assert_eq!(mock.call((1, 1, 1)), 3);
     /// assert_eq!(mock.call((1, 2, 3,)), 6);
     /// ```
-    pub fn use_closure(&self, mock_fn: Box<Fn(C) -> R>) {
+    pub fn use_closure(&self, mock_fn: Box<Fn(C) -> R + Send + Sync>) {
         let mut fn_value = self.mock_fn.write().unwrap();
         *fn_value = None;
 
